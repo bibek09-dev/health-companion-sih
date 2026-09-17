@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Personal Health Companion Dashboard</title>
+</head>
+<body style="background-color: #f0f4f8; font-family: sans-serif; padding: 30px; margin: 0; text-align: center;">
+
+    <!-- TOP PROFILE BAR WITH COMPANION ENGINE MENU -->
+    <div style="max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #111c24; padding: 15px 30px; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="text-align: left;">
+            <h1 style="margin: 0; font-size: 22px; color: #ffc107;">👤 Host Patient: {{ patient.full_name }}</h1>
+            <p style="margin: 3px 0 0 0; font-size: 13px; color: #94a3b8;">Device ID: {{ patient.unique_id }} | DOB: {{ patient.dob }}</p>
+        </div>
+        
+        <!-- VISITING DOCTOR STATUS GAUGE -->
+        <div style="text-align: right; display: flex; align-items: center; gap: 15px;">
+            {% if is_logged_in %}
+                <span style="background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 13px;">
+                    🔓 Verified: Dr. {{ active_doctor.name }}
+                </span>
+                <a href="/doc-logout/" style="color: #ffc107; font-weight: bold; font-size: 13px; text-decoration: none; border: 1px solid #ffc107; padding: 5px 10px; border-radius: 4px;">Logout</a>
+            {% else %}
+                <span style="background: #dc3545; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 13px;">
+                    🔒 Terminal Locked (Patient Mode)
+                </span>
+            {% endif %}
+            
+            <button onclick="toggleMenu()" style="background: #ffc107; color: #111c24; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                📱 Open Patient AI Menu
+            </button>
+        </div>
+
+        <!-- COMPANION TOOLS POPUP DIALOG -->
+        <div id="patientMenu" style="display: none; position: absolute; right: 30px; top: 110px; background: #1c2d3d; border-radius: 6px; padding: 20px; width: 340px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100; color: white; text-align: left;">
+            <h3 style="margin-top: 0; color: #ffc107; border-bottom: 1px solid #444; padding-bottom: 5px;">🤖 Companion Tools</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; display: block; margin-bottom: 5px; color: #ccc;">🌐 System Language Selection:</label>
+                <select id="langSelector" onchange="changeLanguage()" style="padding: 6px; border-radius: 4px; width: 100%; background: #22313f; color: white; border: 1px solid #444;">
+                    <option value="en">English (Active)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px; border-top: 1px solid #444; padding-top: 10px;">
+                <label style="font-size: 12px; display: block; margin-bottom: 5px; color: #ccc;">🛡️ Anti-Fraud Pack Verification:</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="qr_simulation" placeholder="Scan Pack Serial ID" style="padding: 6px; flex: 1; border-radius: 4px; border: 1px solid #444; background: #22313f; color: white; font-size: 12px;">
+                    <button onclick="verifyPack()" style="background: #e83e8c; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">Verify</button>
+                </div>
+                <p id="pack_status" style="margin-top: 5px; font-weight: bold; font-size: 11px; margin-bottom: 0;"></p>
+            </div>
+            <div style="border-top: 1px solid #444; padding-top: 10px;">
+                <label style="font-size: 12px; display: block; margin-bottom: 5px; color: #ccc;">⏱️ 8-Hour Automated Interaction Tracker:</label>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button onclick="simulateCheckIn(true)" style="background: #28a745; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; flex: 1;">Success</button>
+                    <button onclick="simulateCheckIn(false)" style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; flex: 1;">Miss Check-In</button>
+                </div>
+                <p id="tracker_status" style="margin-top: 8px; font-weight: bold; font-size: 11px; color: #28a745; margin-bottom: 0;">➔ Status: Monitoring... Next auto-check in 8h.</p>
+            </div>
+        </div>
+    </div>
+    <!-- MAIN WORKSPACE CORE CONTAINER -->
+    <div style="max-width: 1000px; margin: 0 auto; display: flex; gap: 20px; flex-wrap: wrap;">
+        
+        {% if not is_logged_in %}
+        <!-- LOCK SCREEN GATING ACCESS TERMINAL -->
+        <div style="background: white; border-radius: 8px; padding: 40px 25px; flex: 1; max-width: 500px; margin: 30px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left;">
+            <h2 style="margin-top: 0; color: #dc3545; font-size: 20px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px; text-align: center;">🔒 Doctor Provider Access Gate</h2>
+            <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px;">A visiting medical practitioner must authenticate identity keys to open prescription access logs on this device.</p>
+            
+            <form method="POST" action="/doc-login/" style="display: flex; flex-direction: column; gap: 15px;">
+                {% csrf_token %}
+                <label style="font-weight: bold; font-size: 14px;">Select Practitioner Profile:</label>
+                <select name="doctor_id" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;">
+                    {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}">Dr. {{ doctor.name }} - {{ doctor.specialty }}</option>
+                    {% empty %}
+                        <option disabled>No verified provider accounts detected. Enroll profile below.</option>
+                    {% endfor %}
+                </select>
+
+                <label style="font-weight: bold; font-size: 14px;">Secure Authorization Passcode:</label>
+                <input type="password" name="doctor_passcode" placeholder="Enter Secure Password" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+
+                <button type="submit" style="background: #dc3545; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 5px; box-shadow: 0 4px 6px rgba(220,53,69,0.2);">
+                    Verify Credentials & Unlock System
+                </button>
+            </form>
+        </div>
+        {% else %}
+        
+        <!-- UNLOCKED INTERFACE WORKSPACE ACTIVE CONSOLE MODE -->
+        <!-- LEFT PANELS: DOCTOR LOGGED IN COMPONENT ACTION DECK -->
+        <div style="background: white; border-radius: 8px; padding: 25px; flex: 1.5; min-width: 350px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left;">
+            <h2 style="margin-top: 0; color: #28a745; font-size: 20px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px;">📋 Practitioner Treatment Console</h2>
+            <p style="font-size: 13px; color: #475569; margin: 10px 0 15px 0;">Logged in as: Dr. {{ active_doctor.name }} ({{ active_doctor.specialty }}).</p>
+            
+            <form id="prescriptionForm" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                {% csrf_token %}
+                <input type="hidden" name="submit_prescription" value="1">
+                
+                <!-- 👈 NEW CORE PATIENT DIAGNOSIS INPUT FIELD -->
+                <label style="font-weight: bold; font-size: 14px; color: #0f172a;">Active Patient Diagnosis / Ailment Condition:</label>
+                <input type="text" name="active_diagnosis" placeholder="Type current diagnosed condition (e.g. Hypertension, Malaria)" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; font-weight: 500;">
+
+                <label style="font-weight: bold; font-size: 14px; margin-top: 5px;">Prescribe System Medications:</label>
+                <div style="display: flex; flex-direction: column; gap: 6px; background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 4px; max-height: 150px; overflow-y: auto;">
+                    {% for med in medications %}
+                        <label style="font-size: 14px; cursor: pointer;"><input type="checkbox" name="med_ids" value="{{ med.id }}"> {{ med.name }} (Treats: {{ med.target_disease }})</label>
+                    {% empty %}
+                        <label style="font-size: 14px; color: #777;">No pharmaceutical stock items loaded. Add item below.</label>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" style="background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 6px rgba(40,167,69,0.2);">
+                    Authorize Treatment Plan & Run AI Check
+                </button>
+            </form>
+        </div>
+
+        <!-- RIGHT PANELS: AI MULTI-FACETED DIAGNOSTIC EVALUATION REPORT -->
+        <div style="background: white; border-radius: 8px; padding: 25px; flex: 1; min-width: 280px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; display: flex; flex-direction: column;">
+            <h2 style="margin-top: 0; color: #0f172a; font-size: 20px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px;">📊 AI Audit Evaluation</h2>
+            
+            <div id="analysis_results" style="padding: 15px; background: #f0f7ff; border-left: 5px solid #1070e0; border-radius: 4px; margin-top: 15px; flex: 1; display: none;">
+                <h3 style="margin-top: 0; color: #1070e0; font-size: 16px;">Diagnostic Assessment:</h3>
+                <p style="font-size: 14px; margin: 8px 0;"><strong>Status:</strong> <span id="status_message" style="font-weight: bold;"></span></p>
+                <p style="font-size: 14px; margin: 8px 0;"><strong>Guidance:</strong> <span id="ai_guidance"></span></p>
+                <p style="font-size: 14px; margin: 8px 0;"><strong>Risk Prediction:</strong> <span id="future_prediction"></span></p>
+            </div>
+            
+            <div id="results_placeholder" style="text-align: center; color: #94a3b8; margin: auto 0; padding: 40px 0;">
+                <p style="font-size: 40px; margin: 0;">🤖</p>
+                <p style="font-size: 14px; margin: 10px 0 0 0;">Awaiting prescription modifications to initiate automated expert diagnostics systems cross-check loops.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <!-- CONSOLE REGISTRATION DECK: INCORPORATING TARGET DISEASE ENROLLMENT FIELDS -->
+    <div style="max-width: 1000px; margin: 30px auto 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left;">
+        <h2 style="margin-top: 0; color: #334155; font-size: 20px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px;">⚙️ Provider Data Enrollment Engine</h2>
+        
+        <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+            <!-- Register Doctor Form -->
+            <div style="flex: 1; min-width: 250px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <h3 style="margin-top: 0; color: #17a2b8; font-size: 16px;">Add New Doctor Profile</h3>
+                <form method="POST" action="/add-doctor/" style="display: flex; flex-direction: column; gap: 8px;">
+                    {% csrf_token %}
+                    <input type="text" name="doc_name" placeholder="Doctor Full Name" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <input type="text" name="specialty" placeholder="Medical Specialty Field" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <input type="password" name="doc_password" placeholder="Assign Custom Passcode" required style="padding: 8px; border-radius: 4px; border: 1px solid #17a2b8;">
+                    <button type="submit" style="background: #17a2b8; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;">Save Doctor</button>
+                </form>
+            </div>
+
+            <!-- Add Medication Form (Upgraded with Targeted Ailment Entry) -->
+            <div style="flex: 1; min-width: 250px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <h3 style="margin-top: 0; color: #6f42c1; font-size: 16px;">Add New Medication Stock</h3>
+                <form method="POST" action="/add-medication/" style="display: flex; flex-direction: column; gap: 8px;">
+                    {% csrf_token %}
+                    <input type="text" name="med_name" placeholder="Medication Formula Name" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <input type="text" name="med_uid" placeholder="Batch Serial ID Token" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <input type="text" name="dosage" placeholder="Dosage Metrics (e.g. 10mg)" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    
+                    <!-- 👈 NEW TARGET DISEASE ENROLLMENT INPUT -->
+                    <input type="text" name="target_disease" placeholder="Target Disease (e.g. Hypertension)" required style="padding: 8px; border-radius: 4px; border: 1px solid #6f42c1; font-weight: 500;">
+                    
+                    <button type="submit" style="background: #6f42c1; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;">Save Medication</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CORE FRONTEND APP INTERACTIVE SCRIPT LOGIC -->
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('patientMenu');
+            menu.style.display = (menu.style.display === 'none') ? 'block' : 'none';
+        }
+
+        const rxForm = document.getElementById('prescriptionForm');
+        if (rxForm) {
+            rxForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                
+                fetch('', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ERROR') {
+                        alert("Database Execution Issue: " + data.guide);
+                        return;
+                    }
+                    
+                    document.getElementById('results_placeholder').style.display = 'none';
+                    document.getElementById('analysis_results').style.display = 'block';
+                    
+                    const statusEl = document.getElementById('status_message');
+                    statusEl.innerText = data.status || 'ERROR';
+                    
+                    if(data.status === 'REQUIRES_REVIEW') {
+                        statusEl.style.color = '#ffc107'; 
+                    } else {
+                        statusEl.style.color = '#28a745'; 
+                    }
+                    
+                    document.getElementById('ai_guidance').innerText = data.guide || 'N/A';
+                    document.getElementById('future_prediction').innerText = data.risk_level || 'N/A';
+                });
+            });
+        }
+
+        function changeLanguage() {
+            const lang = document.getElementById('langSelector').value;
+            if(lang === 'hi') alert('अनुवाद सिमुलेशन: सिस्टम भाषा को हिंदी में बदल दिया गया है।');
+            else if(lang === 'or') alert('ଅନୁବାଦ ସିମୁଲେସନ୍: ସିଷ୍ଟମ୍ ଭାଷା ଓଡ଼ିଆକୁ ପରିବର୍ତ୍ତିତ ହୋଇଛି।');
+            else alert('Language reverted to English.');
+        }
+
+        const scannedPacks = new Set(["BATCH-111", "BATCH-222"]);
+        function verifyPack() {
+            const packId = document.getElementById('qr_simulation').value.trim();
+            const statusText = document.getElementById('pack_status');
+            if(!packId) return;
+
+            if (scannedPacks.has(packId)) {
+                statusText.innerHTML = "❌ FRAUD DETECTED: This unique batch pack has already been issued or sold!";
+                statusText.style.color = "#dc3545";
+            } else {
+                scannedPacks.add(packId);
+                statusText.innerHTML = "✅ SUCCESS: Unique tracking pack token registered.";
+                statusText.style.color = "#28a745";
+            }
+        }
+
+        let failedAttempts = 0;
+        function simulateCheckIn(success) {
+            const statusText = document.getElementById('tracker_status');
+            if (success) {
+                failedAttempts = 0;
+                statusText.innerHTML = "➔ Status: Successful interaction. 8-hour monitoring clock reset.";
+                statusText.style.color = "#28a745";
+            } else {
+                failedAttempts++;
+                if (failedAttempts === 1) {
+                    statusText.innerHTML = "🚨 WARNING (1 Miss): Alerted Primary Emergency Contact via SMS!";
+                    statusText.style.color = "#ffc107";
+                } else if (failedAttempts >= 3) {
+                    statusText.innerHTML = "🚨 CRITICAL (3 Misses): Automatically dispatching nearby Blinkit Ambulance!";
+                    statusText.style.color = "#dc3545";
+                    alert("🚑 BLINKIT EMERGENCY DISPATCH SUCCESS!\nAutomated webhook sent to local medical transit dispatch grid coordinates.");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
