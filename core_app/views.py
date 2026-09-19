@@ -48,7 +48,7 @@ def home_page(request):
             target_serial = request.POST.get('target_device_serial', '').strip()
             
             # Dynamic matching search lookup in database to bind the transaction record row safely
-            target_patient_node = patient.objects.filter(full_nameiexact=target_name, unique_idiexact=target_serial).first()
+            target_patient_node = patient.objects.filter(full_name__iexact=target_name, unique_id__iexact=target_serial).first()
             
             # If patient record isn't in system database yet, auto-create a profile row on the fly!
             if not target_patient_node:
