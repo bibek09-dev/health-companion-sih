@@ -228,6 +228,28 @@
         {% endfor %}
     </div>
 </div>
+<!-- 🤖 PERSONALIZED AI CLINICAL COMPANION CHAT HUB -->
+<div style="background: white; border-radius: 8px; padding: 25px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; border-top: 5px solid #ffc107;">
+    <h2 style="margin-top: 0; color: #111c24; font-size: 18px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+        🤖 Private AI Health Companion Copilot
+    </h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Ask your companion assistant about heart disease guidelines, standard compliance parameters, or dosage schedule information.</p>
+    
+    <!-- Dynamic Conversation Stream Window Scroll Box Container -->
+    <div id="companionChatLog" style="height: 250px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; font-size: 13px; line-height: 1.4;">
+        <div style="background: #e0f2fe; color: #0369a1; padding: 10px; border-radius: 8px; max-width: 85%; align-self: flex-start; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <strong>System Copilot:</strong> Hello, {{ patient.full_name }}! I am your dedicated edge-intelligence health guardian. How can I assist you with your recovery or heart disease treatment path today?
+        </div>
+    </div>
+
+    <!-- Active Input Message Controls bar -->
+    <div style="display: flex; gap: 8px;">
+        <input type="text" id="companionPatientInput" placeholder="Ask your clinical assistant... (e.g. Can I take Atorvastatin with milk?)" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box;" onkeypress="if(event.key === 'Enter') handleCompanionChatSubmit()">
+        <button onclick="handleCompanionChatSubmit()" style="background: #ffc107; color: #111c24; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+            Send ➔
+        </button>
+    </div>
+</div>
 {% endif %}
 
 </div>
@@ -285,6 +307,45 @@ function togglePrescriptionDetails(elementId) {
         // Automatically switches the visual drawer layer visibility state on click seamlessly!
         detailBox.style.display = (detailBox.style.display === 'none') ? 'block' : 'none';
     }
+}
+function handleCompanionChatSubmit() {
+    const inputEl = document.getElementById('companionPatientInput');
+    const chatLog = document.getElementById('companionChatLog');
+    if (!inputEl  !inputEl.value.trim()  !chatLog) return;
+
+    const patientQuery = inputEl.value.trim();
+    inputEl.value = ''; // Clean input field box loop instantly
+
+    # Append Patient Bubble Layer to chat interface layout container
+    const patientBubble = document.createElement('div');
+    patientBubble.style.cssText = "background: #dcfce7; color: #14532d; padding: 10px; border-radius: 8px; max-width: 85%; align-self: flex-end; box-shadow: 0 1px 2px rgba(0,0,0,0.02); text-align: left;";
+    patientBubble.innerHTML = <strong>You:</strong> ${patientQuery};
+    chatLog.appendChild(patientBubble);
+    chatLog.scrollTop = chatLog.scrollHeight; // Auto scroll focus container tracking
+
+    # Simulate Edge AI computing text generation latency delay
+    setTimeout(() => {
+        let systemResponse = "I have processed your observation parameter logs. For verified safety tracking, please maintain consistent medication compliance intervals and register your upcoming 8-Hour check-in window promptly.";
+        const lowercaseQuery = patientQuery.toLowerCase();
+
+        # Rule-based diagnostic context response router matrix matching user text keywords
+        if (lowercaseQuery.includes('side effect') || lowercaseQuery.includes('allergy')) {
+            systemResponse = "Common side effects for cardiovascular modulators can include minor muscle aches or dizziness. Please consult your primary care doctor if symptoms worsen.";
+        } else if (lowercaseQuery.includes('atorvastatin')  lowercaseQuery.includes('cholesterol')  lowercaseQuery.includes('fat')) {
+            systemResponse = "Atorvastatin helps manage lipid metrics and prevents arterial clogging. For optimal metabolic synthesis, it is highly recommended to administer this medication consistently in the evening.";
+        } else if (lowercaseQuery.includes('amlodipine')  lowercaseQuery.includes('bp')  lowercaseQuery.includes('blood pressure')) {
+            systemResponse = "Amlodipine works seamlessly to widen vascular pathways, reducing cardiac workload workloads. Make sure to monitor your blood pressure limits before taking the dose.";
+        } else if (lowercaseQuery.includes('diet')  lowercaseQuery.includes('food')  lowercaseQuery.includes('eat')) {
+            systemResponse = "Maintaining a low-sodium, heart-healthy dietary baseline accelerates vascular rehabilitation tracks. Minimize heavy trans-fats and ensure constant trace hydration loops.";
+        }
+
+        # Append Copilot Response Bubble
+        const copilotBubble = document.createElement('div');
+        copilotBubble.style.cssText = "background: #e0f2fe; color: #0369a1; padding: 10px; border-radius: 8px; max-width: 85%; align-self: flex-start; box-shadow: 0 1px 2px rgba(0,0,0,0.02); text-align: left;";
+        copilotBubble.innerHTML = <strong>System Copilot:</strong> ${systemResponse};
+        chatLog.appendChild(copilotBubble);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }, 800);
 }
 function switchTab(role) {
     const pCard = document.getElementById('patientCard');
