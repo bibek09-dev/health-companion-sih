@@ -316,19 +316,19 @@ function handleCompanionChatSubmit() {
     const patientQuery = inputEl.value.trim();
     inputEl.value = ''; // Clean input field box loop instantly
 
-    # Append Patient Bubble Layer to chat interface layout container
+    // 🟢 Fixed comment tags: Append Patient Bubble Layer to chat interface layout container
     const patientBubble = document.createElement('div');
     patientBubble.style.cssText = "background: #dcfce7; color: #14532d; padding: 10px; border-radius: 8px; max-width: 85%; align-self: flex-end; box-shadow: 0 1px 2px rgba(0,0,0,0.02); text-align: left;";
     patientBubble.innerHTML = <strong>You:</strong> ${patientQuery};
     chatLog.appendChild(patientBubble);
     chatLog.scrollTop = chatLog.scrollHeight; // Auto scroll focus container tracking
 
-    # Simulate Edge AI computing text generation latency delay
+    // 🟢 Fixed comment tags: Simulate Edge AI computing text generation latency delay
     setTimeout(() => {
         let systemResponse = "I have processed your observation parameter logs. For verified safety tracking, please maintain consistent medication compliance intervals and register your upcoming 8-Hour check-in window promptly.";
         const lowercaseQuery = patientQuery.toLowerCase();
 
-        # Rule-based diagnostic context response router matrix matching user text keywords
+        // 🟢 Fixed comment tags: Rule-based diagnostic context response router matrix matching user text keywords
         if (lowercaseQuery.includes('side effect') || lowercaseQuery.includes('allergy')) {
             systemResponse = "Common side effects for cardiovascular modulators can include minor muscle aches or dizziness. Please consult your primary care doctor if symptoms worsen.";
         } else if (lowercaseQuery.includes('atorvastatin')  lowercaseQuery.includes('cholesterol')  lowercaseQuery.includes('fat')) {
@@ -339,7 +339,7 @@ function handleCompanionChatSubmit() {
             systemResponse = "Maintaining a low-sodium, heart-healthy dietary baseline accelerates vascular rehabilitation tracks. Minimize heavy trans-fats and ensure constant trace hydration loops.";
         }
 
-        # Append Copilot Response Bubble
+        // Append Copilot Response Bubble
         const copilotBubble = document.createElement('div');
         copilotBubble.style.cssText = "background: #e0f2fe; color: #0369a1; padding: 10px; border-radius: 8px; max-width: 85%; align-self: flex-start; box-shadow: 0 1px 2px rgba(0,0,0,0.02); text-align: left;";
         copilotBubble.innerHTML = <strong>System Copilot:</strong> ${systemResponse};
