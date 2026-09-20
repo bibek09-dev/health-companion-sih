@@ -181,18 +181,22 @@
     </div>
 {% endif %}
 {% if request.session.role == 'patient' %}
+   
     <!-- 👤 ACTIVE PATIENT SECURE HISTORICAL TREATMENT MATRIX LOGS -->
-    <div style="background: white; border-radius: 8px; padding: 30px; flex: 1; min-width: 350px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; border-top: 5px solid #16a34a;">
-        <h2 style="margin-top: 0; color: #16a34a; font-size: 20px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px;">📋 Your Verified Treatment History Logs</h2>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Review verified diagnostic prescriptions running across your system hardware engine node.</p>
-        
-        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;">
-            {% for rx in prescriptions %}
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+<div style="background: white; border-radius: 8px; padding: 30px; flex: 1; min-width: 350px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; border-top: 5px solid #16a34a;">
+    <h2 style="margin-top: 0; color: #16a34a; font-size: 20px; border-bottom: 2px solid #eef3f8; padding-bottom: 10px;">📋 Your Verified Treatment History Logs</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Click on any record entry line below to expand and view the structural clinical prescription details natively.</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px; max-height: 450px; overflow-y: auto;">
+        {% for rx in prescriptions %}
+            <!-- Interactive Collapsible Header Row Container Entry -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                
+                <div onclick="togglePrescriptionDetails('rx-detail-{{ rx.id }}')" style="padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
                     <div>
                         <span style="font-size: 11px; font-family: monospace; color: #64748b; display: block;">Committed: {{ rx.date_issued|date:"Y-m-d H:i" }}</span>
                         <strong style="color: #1e293b; font-size: 14px;">Provider ID: Dr. {{ rx.doctor.name }}</strong>
-                        <span style="font-size: 12px; color: #475569; display: block; margin-top: 2px;">Batch Tracker: {{ rx.pack_unique_id }}</span>
+                        <span style="font-size: 12px; color: #475569; display: block; margin-top: 2px;">Batch Tracker: {{ rx.pack_unique_id }} 🔍 (Click to expand)</span>
                     </div>
                     <div>
                         {% if rx.ai_approval_status == 'APPROVED' %}
@@ -202,11 +206,28 @@
                         {% endif %}
                     </div>
                 </div>
-            {% empty %}
-                <p style="color: #64748b; font-size: 13px; text-align: center; padding: 25px;">No historical transaction entries logged on this physical network node.</p>
-            {% endfor %}
-        </div>
+
+                <!-- Hidden Collapsible Detail Drawer Content Box Panel -->
+                <div id="rx-detail-{{ rx.id }}" style="display: none; background: white; border-top: 1px solid #e2e8f0; padding: 15px; font-size: 13px; color: #334155;">
+                    <div style="background: #f0f7ff; border-left: 4px solid #1070e0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                        <strong>🩺 Authorized Diagnosis:</strong> {{ rx.doctor.specialty }} Management Protocol Loop
+                    </div>
+                    <strong>💊 Prescribed System Medication Items Block:</strong>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #475569;">
+                        {% for med in rx.prescribed_meds.all %}
+                            <li style="margin-bottom: 4px;"><strong>{{ med.name }}</strong> - Dosage: {{ med.dosage_standard }} (Target: {{ med.target_disease }})</li>
+                        {% empty %}
+                            <li style="color: #94a3b8;">No specific product units bound inside this digital ledger block entry.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+            </div>
+        {% empty %}
+            <p style="color: #64748b; font-size: 13px; text-align: center; padding: 25px;">No historical transaction entries logged on this physical network node.</p>
+        {% endfor %}
     </div>
+</div>
 {% endif %}
 
 </div>
@@ -258,7 +279,13 @@ const translations = {
         verify_btn: "ବୋର୍ଡ ଖୋଲନ୍ତୁ"
     }
 };
-
+function togglePrescriptionDetails(elementId) {
+    const detailBox = document.getElementById(elementId);
+    if (detailBox) {
+        // Automatically switches the visual drawer layer visibility state on click seamlessly!
+        detailBox.style.display = (detailBox.style.display === 'none') ? 'block' : 'none';
+    }
+}
 function switchTab(role) {
     const pCard = document.getElementById('patientCard');
     const dCard = document.getElementById('doctorCard');
